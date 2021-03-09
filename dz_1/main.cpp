@@ -22,15 +22,23 @@ void Qubit(complexd *in, complexd *out, complexd U[2][2], int nqubits, int k)
 }
 void init_vector(complexd *in)
 {
-	int size = 1 << QubitNum;
-#pragma omp parallel for num_threads(128)
-    for (int i = 0; i < (size - 4); i+=4)
+    int size = 1 << QubitNum;
+    double sum = 0;
+#pragma omp parallel for num_threads(128), reduction(+ \
+                                                     : sum)
+    for (int i = 0; i < (size - 4); i += 4)
     {
-        complexd temp1(rand(), rand()),temp2(rand(),rand()),temp3(rand(),rand()),temp4(rand(),rand());
+        complexd temp1(rand(), rand()), temp2(rand(), rand()), temp3(rand(), rand()), temp4(rand(), rand());
         in[i] = temp1;
-	in[i+1] = temp2;
-	in[i+2] = temp3;
-	in[i+3] = temp4;
+        in[i + 1] = temp2;
+        in[i + 2] = temp3;
+        in[i + 3] = temp4;
+        sum += abs(in[i] * in[i] + in[i + 1] * in[i + 1] + in[i + 2] * in[i + 2] + in[i + 3] * in[i + 3]);
+    }
+    #pragma omp parallel for num_threads(128)
+    for(int i = 0;i < size;i++)
+    {
+        in[i] /= sqrt(sum);
     }
 }
 int main()
