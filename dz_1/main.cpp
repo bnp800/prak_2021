@@ -5,7 +5,7 @@ using namespace std;
 
 typedef std::complex<double> complexd;
 #define QubitNum 20
-#define NUM_THREAD 1
+#define NUM_THREAD 8
 void Qubit(complexd *in, complexd *out, complexd U[2][2], int nqubits, int k)
 {
     int shift = nqubits - k;
@@ -22,18 +22,26 @@ void Qubit(complexd *in, complexd *out, complexd U[2][2], int nqubits, int k)
 }
 void init_vector(complexd *in)
 {
-    for (int i = 0; i < (2 << QubitNum); i++)
+	int size = 1 << QubitNum;
+#pragma omp parallel for num_threads(128)
+    for (int i = 0; i < (size - 4); i+=4)
     {
-        complexd temp(rand(), rand());
-        in[i] = temp;
+        complexd temp1(rand(), rand()),temp2(rand(),rand()),temp3(rand(),rand()),temp4(rand(),rand());
+        in[i] = temp1;
+	in[i+1] = temp2;
+	in[i+2] = temp3;
+	in[i+3] = temp4;
     }
 }
 int main()
 {
     srand(time(NULL));
     complexd U[2][2], *in, *out;
-    unsigned long long int size = 2;
-    int k = 9; //number in list
+    unsigned long long int size = 1;
+    int k;
+    //k = 9; //number in list
+    //k = 1;
+    k = QubitNum;
     size <<= QubitNum;
     U[0][0] = U[0][1] = U[1][0] = sqrt(2) / 2;
     U[1][1] = -sqrt(2) / 2;
