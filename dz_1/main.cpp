@@ -4,8 +4,9 @@
 using namespace std;
 
 typedef std::complex<double> complexd;
-#define QubitNum 20
-#define NUM_THREAD 8
+int QubitNum;
+int NUM_THREAD;
+int target;
 void Qubit(complexd *in, complexd *out, complexd U[2][2], int nqubits, int k)
 {
     int shift = nqubits - k;
@@ -41,15 +42,17 @@ void init_vector(complexd *in)
         in[i] /= sqrt(sum);
     }
 }
-int main()
+int main(int argc,char* argv[])
 {
     srand(time(NULL));
     complexd U[2][2], *in, *out;
     unsigned long long int size = 1;
-    int k;
     //k = 9; //number in list
     //k = 1;
-    k = QubitNum;
+    QubitNum = atoi(argv[1]);
+    NUM_THREAD = atoi(argv[2]);
+    target = atoi(argv[3]);
+    //k = QubitNum;
     size <<= QubitNum;
     U[0][0] = U[0][1] = U[1][0] = sqrt(2) / 2;
     U[1][1] = -sqrt(2) / 2;
@@ -57,7 +60,7 @@ int main()
     out = new complexd[size];
     init_vector(in);
     double begin = omp_get_wtime();
-    Qubit(in, out, U, QubitNum, k);
+    Qubit(in, out, U, QubitNum, target);
     double end = omp_get_wtime();
     cout << "Thread num: " << NUM_THREAD << endl
          << "Qubit: " << QubitNum << endl
