@@ -7,7 +7,7 @@ main:
 	g++ main.cpp -o main -fopenmp
 
 run:
-	./main
+	./main $(Qnum) 2 $(Target)
 clean:
 	rm main
 test: main 

@@ -36,13 +36,13 @@ void init_vector(complexd *in)
         in[i + 3] = temp4;
         sum += abs(in[i] * in[i] + in[i + 1] * in[i + 1] + in[i + 2] * in[i + 2] + in[i + 3] * in[i + 3]);
     }
-    #pragma omp parallel for num_threads(128)
-    for(int i = 0;i < size;i++)
+#pragma omp parallel for num_threads(128)
+    for (int i = 0; i < size; i++)
     {
         in[i] /= sqrt(sum);
     }
 }
-int main(int argc,char* argv[])
+int main(int argc, char *argv[])
 {
     srand(time(NULL));
     complexd U[2][2], *in, *out;
