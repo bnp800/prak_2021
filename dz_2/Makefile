@@ -18,3 +18,4 @@ test:
 
 clean:
 	rm $(appname)
+	rm *.txt

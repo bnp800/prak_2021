@@ -59,29 +59,57 @@ int main(int argc, char *argv[])
     int myleft = myrank * partion_size;
     int myright = (myrank + 1) * partion_size - 1;
     int totalsum;
+    int mode;
     if (myright >= size)
     {
         myright = size - 1;
     }
+    string name;
+    name = string("out") + char(myrank + '0') + string(".txt");
     in = new complexd[myright - myleft];
     out = new complexd[myright - myleft];
-
-    srand(myrank * time(NULL));
-    Init_vector(in, myleft, myright);
-    double sum = Get_sum(in, myleft, myright);
-    MPI_Reduce(&sum, &totalsum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    Normalize(in, myleft, myright, totalsum);
-    my_begin = MPI_Wtime();
-    Qubit(in, out, U, qnum, myleft, myright, target);
-    my_end = MPI_Wtime();
-    my_time = my_end - my_begin;
-    MPI_Reduce(&my_time, &total_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     if (!myrank)
     {
-        cout << "Qnum: " << qnum << endl;
-        cout << "Time: " << total_time << endl;
-        cout << "Target: " << target << endl;
-        cout << "Pnum: " << world_size << endl;
+        cout << "Chose mode: " << endl;
+        cout << "1.Generate vector" << endl;
+        cout << "2.Read from file" << endl;
+        cin >> mode;
+    }
+    MPI_Bcast(&mode, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (mode == 1)
+    {
+        srand(myrank * time(NULL));
+        Init_vector(in, myleft, myright);
+        double sum = Get_sum(in, myleft, myright);
+        MPI_Reduce(&sum, &totalsum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        Normalize(in, myleft, myright, totalsum);
+        ofstream myout(name);
+        for (int i = 0; i < myright - myleft; i++)
+        {
+            myout << in[i] << " ";
+        }
+        myout.close();
+        cout << "Process " << myrank << " complete" << endl;
+    }
+    if (mode == 2)
+    {
+        ifstream myin(name);
+        for (int i = 0; i < myright - myleft; i++)
+        {
+            myin >> in[i];
+        }
+        my_begin = MPI_Wtime();
+        Qubit(in, out, U, qnum, myleft, myright, target);
+        my_end = MPI_Wtime();
+        my_time = my_end - my_begin;
+        MPI_Reduce(&my_time, &total_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        if (!myrank)
+        {
+            cout << "Qnum: " << qnum << endl;
+            cout << "Time: " << total_time << " s" << endl;
+            cout << "Target: " << target << endl;
+            cout << "Pnum: " << world_size << endl;
+        }
     }
     //Init_vector(myrank, qnum);
     MPI_Finalize();

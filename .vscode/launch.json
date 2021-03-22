@@ -12,7 +12,9 @@
             "args": [
                 "-np",
                 "4",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "20",
+                "9"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
