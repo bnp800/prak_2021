@@ -1,6 +1,6 @@
 pnum = 8
 qnum = 20
-target = 9
+target = 1
 appname = main
 write = 1
 read = 2
@@ -25,5 +25,4 @@ tester:
 
 clean:
 	rm $(appname)
-	rm test
 	rm *.txt
