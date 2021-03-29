@@ -1,5 +1,5 @@
 pnum = 8
-qnum = 20
+qnum = 15
 target = 1
 appname = main
 write = 1
@@ -7,7 +7,7 @@ read = 2
 all: main run
 
 main: 
-	mpic++ main.cpp -o $(appname)
+	mpic++ main.cpp -o $(appname) -std=c++11 
 
 run: main
 	mpirun -np $(pnum) $(appname) $(qnum) $(target) $(write)

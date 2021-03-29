@@ -64,16 +64,11 @@ int main(int argc, char *argv[])
     int myright = (myrank + 1) * partion_size - 1;
     double totalsum;
     int mode = atoi(argv[3]);
-    int *indexleft = new int[world_size], *indexright = new int[world_size];
     if (myright >= size)
     {
         myright = size - 1;
     }
     partion_size = myright - myleft + 1;
-    indexleft[myrank] = myleft;
-    indexright[myrank] = myright;
-    MPI_Allgather(indexleft + myrank, 1, MPI_INT, indexleft, 1, MPI_INT, MPI_COMM_WORLD);
-    MPI_Allgather(indexright + myrank, 1, MPI_INT, indexright, 1, MPI_INT, MPI_COMM_WORLD);
 
     in = new complexd[partion_size];
     out = new complexd[partion_size];
@@ -95,6 +90,11 @@ int main(int argc, char *argv[])
 
     if (mode == 2)
     {
+        int *indexleft = new int[world_size], *indexright = new int[world_size];
+        indexleft[myrank] = myleft;
+        indexright[myrank] = myright;
+        MPI_Allgather(indexleft + myrank, 1, MPI_INT, indexleft, 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Allgather(indexright + myrank, 1, MPI_INT, indexright, 1, MPI_INT, MPI_COMM_WORLD);
         string name = "res" + to_string(world_size) + ".txt";
         MPI_File fin, fout;
         MPI_File_open(MPI_COMM_WORLD, "vector.txt", MPI_MODE_RDONLY, MPI_INFO_NULL, &fin);
@@ -108,12 +108,12 @@ int main(int argc, char *argv[])
             if (myrank == cur_rank)
             {
                 //cout << "Now process " << cur_rank << " colletcting data" << endl;
-                int shift = qnum - target;
-                int pow2q = 1 << shift;
+                unsigned int shift = qnum - target;
+                unsigned int pow2q = 1 << shift;
                 for (int i = 0; i < partion_size; i++)
                 {
-                    int i0 = (i + myleft) & (~pow2q);
-                    int i1 = (i + myleft) | pow2q;
+                    unsigned int i0 = (i + myleft) & (~pow2q);
+                    unsigned int i1 = (i + myleft) | pow2q;
                     if (i0 >= myleft && i0 <= myright)
                     {
                         op1[i] = in[i0];
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
                         while (indexleft[rank] > i0 || indexright[rank] < i0)
                             rank--;
                         //cout << "Process " << myrank << " : need data index " << i0 << " for op1 from process " << rank << " which now it's " << op1[i] << endl;
-                        MPI_Sendrecv(&i0, 1, MPI_INT, rank, 0, op1 + i, 1, MPI_DOUBLE_COMPLEX, rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                        MPI_Sendrecv(&i0, 1, MPI_INT, rank, 0, &op1[i], 1, MPI_DOUBLE_COMPLEX, rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         //cout << "Process " << myrank << " : had data index " << i0 << " for op1 from process " << rank << " which now it's " << op1[i] << endl;
                     }
                     if (i1 >= myleft && i1 <= myright)
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
                         while (indexleft[rank] > i1 || indexright[rank] < i1)
                             rank--;
                         //cout << "Process " << myrank << " : need data index " << i1 << " for op2 from process " << rank << " which now it's " << op2[i] << endl;
-                        MPI_Sendrecv(&i1, 1, MPI_INT, rank, 0, op2 + i, 1, MPI_DOUBLE_COMPLEX, rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                        MPI_Sendrecv(&i1, 1, MPI_INT, rank, 0, &op2[i], 1, MPI_DOUBLE_COMPLEX, rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         //cout << "Process " << myrank << " : had data index " << i1 << " for op2 from process " << rank << " which now it's " << op2[i] << endl;
                     }
                 }
@@ -149,33 +149,21 @@ int main(int argc, char *argv[])
                         MPI_Send(&id, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
                     }
                 }
-                cout << "Continue" << endl;
-                //continue;
-                /*flag = 1;
-                MPI_Bcast(&flag, 1, MPI_INT, myrank, MPI_COMM_WORLD);
-                cur_rank++;
-                MPI_Bcast(&cur_rank, 1, MPI_INT, myrank, MPI_COMM_WORLD);
-                cout << "Process " << myrank << " complete collect data, now transfering to process " << cur_rank << " flag = " << flag << endl;
-                //MPI_Barrier(MPI_COMM_WORLD);*/
             }
             else
             {
                 //cout << "Process " << myrank << " sending data to process " << cur_rank << /*" flag = " << flag << */ endl;
-                int target_id;
-                //MPI_Probe(cur_rank, 0, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE);
+                unsigned int target_id = 0;  
                 while (1)
                 {
                     //cout << "Process " << myrank << " wait message from process " << cur_rank << endl;
                     MPI_Recv(&target_id, 1, MPI_INT, cur_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     if (target_id == -1)
                         break;
-                    MPI_Send(in - myleft + target_id, 1, MPI_DOUBLE_COMPLEX, cur_rank, 0, MPI_COMM_WORLD);
+                    else
+                        MPI_Send(in + (target_id - myleft), 1, MPI_DOUBLE_COMPLEX, cur_rank, 0, MPI_COMM_WORLD);
                     //cout << "Process " << myrank << " : sent data index " << target_id << " to process " << cur_rank << " which now it's " << in[target_id - myleft] << endl;
-                    //MPI_Probe(cur_rank, 0, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE);
                 }
-                /*flag = 0;
-                MPI_Bcast(&flag, 1, MPI_INT, cur_rank, MPI_COMM_WORLD);
-                //MPI_Barrier(MPI_COMM_WORLD);*/
             }
         }
         my_begin = MPI_Wtime();
@@ -200,12 +188,13 @@ int main(int argc, char *argv[])
             cout << "Target: " << target << endl;
             cout << "Time: " << total_time << " s" << endl;
         }
-        delete[] op1;
-        delete[] op2;
+        delete [] op1;
+        delete [] op2;
+        delete [] indexleft;
+        delete [] indexright;
     }
     delete[] in;
     delete[] out;
-    delete[] indexleft;
-    delete[] indexright;
+
     MPI_Finalize();
 }
