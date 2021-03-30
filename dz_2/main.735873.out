@@ -1,0 +1,54 @@
+Sender: LSF System <lsfadmin@polus-c4-ib.bmc.hpc.cs.msu.ru>
+Subject: Job 735873: <# this file was automaticly created by mpisubmit.pl script for edu-cmc-sqi20-16 #;source /polusfs/setenv/setup.SMPI;#BSUB -n 1;#BSUB -W 00:15;#BSUB -o main.%J.out;#BSUB -e main.%J.err;OMP_NUM_THREADS=1 mpiexec main 27 9 2> in cluster <MSUCluster> Exited
+
+Job <# this file was automaticly created by mpisubmit.pl script for edu-cmc-sqi20-16 #;source /polusfs/setenv/setup.SMPI;#BSUB -n 1;#BSUB -W 00:15;#BSUB -o main.%J.out;#BSUB -e main.%J.err;OMP_NUM_THREADS=1 mpiexec main 27 9 2> was submitted from host <polus-ib.bmc.hpc.cs.msu.ru> by user <edu-cmc-sqi20-16> in cluster <MSUCluster> at Tue Mar 30 15:51:47 2021
+Job was executed on host(s) <polus-c4-ib.bmc.hpc.cs.msu.ru>, in queue <short>, as user <edu-cmc-sqi20-16> in cluster <MSUCluster> at Tue Mar 30 15:51:58 2021
+</home_edu/edu-cmc-sqi20/edu-cmc-sqi20-16> was used as the home directory.
+</home_edu/edu-cmc-sqi20/edu-cmc-sqi20-16/prak_2021/dz_2> was used as the working directory.
+Started at Tue Mar 30 15:51:58 2021
+Terminated at Tue Mar 30 15:52:13 2021
+Results reported at Tue Mar 30 15:52:13 2021
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+# this file was automaticly created by mpisubmit.pl script for edu-cmc-sqi20-16 #
+source /polusfs/setenv/setup.SMPI
+#BSUB -n 1
+#BSUB -W 00:15
+#BSUB -o main.%J.out
+#BSUB -e main.%J.err
+OMP_NUM_THREADS=1 mpiexec main 27 9 2
+
+------------------------------------------------------------
+
+Exited with exit code 2.
+
+Resource usage summary:
+
+    CPU time :                                   2.00 sec.
+    Max Memory :                                 4166 MB
+    Average Memory :                             2555.25 MB
+    Total Requested Memory :                     -
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              5
+    Max Threads :                                12
+    Run time :                                   19 sec.
+    Turnaround time :                            26 sec.
+
+The output (if any) follows:
+
+[polus-c4-ib:150121] *** An error occurred in MPI_Status_set_elements
+[polus-c4-ib:150121] *** reported by process [3991601153,0]
+[polus-c4-ib:150121] *** on communicator MPI_COMM_WORLD
+[polus-c4-ib:150121] *** MPI_ERR_COUNT: invalid count argument
+[polus-c4-ib:150121] *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,
+[polus-c4-ib:150121] ***    and potentially your MPI job)
+
+
+PS:
+
+Read file <main.735873.err> for stderr output of this job.
+

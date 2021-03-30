@@ -1,0 +1,51 @@
+Sender: LSF System <lsfadmin@polus-c3-ib.bmc.hpc.cs.msu.ru>
+Subject: Job 735866: <# this file was automaticly created by mpisubmit.pl script for edu-cmc-sqi20-16 #;source /polusfs/setenv/setup.SMPI;#BSUB -n 8;#BSUB -W 00:15;#BSUB -o main.%J.out;#BSUB -e main.%J.err;OMP_NUM_THREADS=1 mpiexec main 26 1 2> in cluster <MSUCluster> Exited
+
+Job <# this file was automaticly created by mpisubmit.pl script for edu-cmc-sqi20-16 #;source /polusfs/setenv/setup.SMPI;#BSUB -n 8;#BSUB -W 00:15;#BSUB -o main.%J.out;#BSUB -e main.%J.err;OMP_NUM_THREADS=1 mpiexec main 26 1 2> was submitted from host <polus-ib.bmc.hpc.cs.msu.ru> by user <edu-cmc-sqi20-16> in cluster <MSUCluster> at Tue Mar 30 15:51:02 2021
+Job was executed on host(s) <8*polus-c3-ib.bmc.hpc.cs.msu.ru>, in queue <short>, as user <edu-cmc-sqi20-16> in cluster <MSUCluster> at Tue Mar 30 15:51:06 2021
+</home_edu/edu-cmc-sqi20/edu-cmc-sqi20-16> was used as the home directory.
+</home_edu/edu-cmc-sqi20/edu-cmc-sqi20-16/prak_2021/dz_2> was used as the working directory.
+Started at Tue Mar 30 15:51:06 2021
+Terminated at Tue Mar 30 15:51:54 2021
+Results reported at Tue Mar 30 15:51:54 2021
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+# this file was automaticly created by mpisubmit.pl script for edu-cmc-sqi20-16 #
+source /polusfs/setenv/setup.SMPI
+#BSUB -n 8
+#BSUB -W 00:15
+#BSUB -o main.%J.out
+#BSUB -e main.%J.err
+OMP_NUM_THREADS=1 mpiexec main 26 1 2
+
+------------------------------------------------------------
+
+Exited with exit code 139.
+
+Resource usage summary:
+
+    CPU time :                                   375.00 sec.
+    Max Memory :                                 4536 MB
+    Average Memory :                             4032.11 MB
+    Total Requested Memory :                     -
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              12
+    Max Threads :                                33
+    Run time :                                   49 sec.
+    Turnaround time :                            52 sec.
+
+The output (if any) follows:
+
+--------------------------------------------------------------------------
+mpiexec noticed that process rank 4 with PID 0 on node polus-c3-ib exited on signal 11 (Segmentation fault).
+--------------------------------------------------------------------------
+
+
+PS:
+
+Read file <main.735866.err> for stderr output of this job.
+

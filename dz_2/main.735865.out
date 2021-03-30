@@ -1,0 +1,52 @@
+Sender: LSF System <lsfadmin@polus-c3-ib.bmc.hpc.cs.msu.ru>
+Subject: Job 735865: <# this file was automaticly created by mpisubmit.pl script for edu-cmc-sqi20-16 #;source /polusfs/setenv/setup.SMPI;#BSUB -n 4;#BSUB -W 00:15;#BSUB -o main.%J.out;#BSUB -e main.%J.err;OMP_NUM_THREADS=1 mpiexec main 26 1 2> in cluster <MSUCluster> Done
+
+Job <# this file was automaticly created by mpisubmit.pl script for edu-cmc-sqi20-16 #;source /polusfs/setenv/setup.SMPI;#BSUB -n 4;#BSUB -W 00:15;#BSUB -o main.%J.out;#BSUB -e main.%J.err;OMP_NUM_THREADS=1 mpiexec main 26 1 2> was submitted from host <polus-ib.bmc.hpc.cs.msu.ru> by user <edu-cmc-sqi20-16> in cluster <MSUCluster> at Tue Mar 30 15:51:02 2021
+Job was executed on host(s) <4*polus-c3-ib.bmc.hpc.cs.msu.ru>, in queue <short>, as user <edu-cmc-sqi20-16> in cluster <MSUCluster> at Tue Mar 30 15:51:03 2021
+</home_edu/edu-cmc-sqi20/edu-cmc-sqi20-16> was used as the home directory.
+</home_edu/edu-cmc-sqi20/edu-cmc-sqi20-16/prak_2021/dz_2> was used as the working directory.
+Started at Tue Mar 30 15:51:03 2021
+Terminated at Tue Mar 30 15:52:39 2021
+Results reported at Tue Mar 30 15:52:39 2021
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+# this file was automaticly created by mpisubmit.pl script for edu-cmc-sqi20-16 #
+source /polusfs/setenv/setup.SMPI
+#BSUB -n 4
+#BSUB -W 00:15
+#BSUB -o main.%J.out
+#BSUB -e main.%J.err
+OMP_NUM_THREADS=1 mpiexec main 26 1 2
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   356.78 sec.
+    Max Memory :                                 4325 MB
+    Average Memory :                             4036.27 MB
+    Total Requested Memory :                     -
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              8
+    Max Threads :                                21
+    Run time :                                   96 sec.
+    Turnaround time :                            97 sec.
+
+The output (if any) follows:
+
+Qnum: 26
+Pnum: 4
+Target: 1
+Time: 1.55932 s
+
+
+PS:
+
+Read file <main.735865.err> for stderr output of this job.
+
