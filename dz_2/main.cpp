@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
             else
             {
                 //cout << "Process " << myrank << " sending data to process " << cur_rank << /*" flag = " << flag << */ endl;
-                unsigned int target_id = 0;  
+                int target_id = 0;  
                 while (1)
                 {
                     //cout << "Process " << myrank << " wait message from process " << cur_rank << endl;
