@@ -100,14 +100,14 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
     unsigned long size = 1 << qnum;
-    double e = atoi(argv[2]); //0.1, 0.01, 0.001
-    complexd U[2][2], *in, *out, *all, U1[2][2];
+    double e = stod(argv[2]); //0.1, 0.01, 0.001
+    complexd U[2][2], *in, *out1, *out2, U1[2][2];
     U[0][0] = U[0][1] = U[1][0] = sqrt(2) / 2;
     U[1][1] = -sqrt(2) / 2;
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < 2; j++)
             U1[i][j] = U[i][j];
-    Init_matrix(U, e);
+    Init_matrix(U1, e);
     double my_begin, my_end, my_time, total_time;
     int partion_size = size / world_size;
     int myleft = myrank * partion_size;
@@ -121,8 +121,8 @@ int main(int argc, char *argv[])
     partion_size = myright - myleft + 1;
 
     in = new complexd[partion_size];
-    out = new complexd[partion_size];
-
+    out1 = new complexd[partion_size];
+    out2 = new complexd[partion_size];
     if (mode == 1)
     {
         srand(myrank * time(NULL));
@@ -145,10 +145,12 @@ int main(int argc, char *argv[])
         indexright[myrank] = myright;
         MPI_Allgather(indexleft + myrank, 1, MPI_INT, indexleft, 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Allgather(indexright + myrank, 1, MPI_INT, indexright, 1, MPI_INT, MPI_COMM_WORLD);
-        string name = "res" + to_string(world_size) + ".txt";
-        MPI_File fin, fout;
+        string name1 = "res" + to_string(world_size) + ".txt";
+        string name2 = "res" + to_string(world_size) + "_noise.txt";
+        MPI_File fin, fout1, fout2;
         MPI_File_open(MPI_COMM_WORLD, "vector.txt", MPI_MODE_RDONLY, MPI_INFO_NULL, &fin);
-        MPI_File_open(MPI_COMM_WORLD, name.c_str(), MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &fout);
+        MPI_File_open(MPI_COMM_WORLD, name1.c_str(), MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &fout1);
+        MPI_File_open(MPI_COMM_WORLD, name2.c_str(), MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &fout2);
         MPI_File_read_ordered(fin, in, partion_size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
         complexd *op1, *op2;
         op1 = new complexd[partion_size];
@@ -221,19 +223,27 @@ int main(int argc, char *argv[])
             }
             my_begin = MPI_Wtime();
             MPI_Barrier(MPI_COMM_WORLD);
-            Qubit(op1, op2, out, U, qnum, partion_size, myleft, target);
+            Qubit(op1, op2, out1, U, qnum, partion_size, myleft, target);
             MPI_Barrier(MPI_COMM_WORLD);
             my_end = MPI_Wtime();
             my_time = my_end - my_begin;
             MPI_Reduce(&my_time, &total_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            Qubit(op1, op2, out2, U1, qnum, partion_size, myleft, target);
         }
         total_time /= world_size;
-        MPI_File_write_ordered(fout, out, partion_size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
+        MPI_File_write_ordered(fout1, out1, partion_size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
+        MPI_File_write_ordered(fout2, out2, partion_size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
         MPI_File_close(&fin);
-        MPI_File_close(&fout);
+        MPI_File_close(&fout1);
+        MPI_File_close(&fout2);
+        double f = fidelity(out1, out2, partion_size), total_fidelity = 0;
+        MPI_Reduce(&f, &total_fidelity, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         if (!myrank)
         {
-
+            string name = "precision_" + to_string(e) + "_" + to_string(qnum) + ".txt"; 
+            fstream out;
+            out.open(name, ios::app);
+            out << total_fidelity << endl;
             cout << "Qnum: " << qnum << endl;
             cout << "Pnum: " << world_size << endl;
             //cout << "Target: " << target << endl;
@@ -245,7 +255,8 @@ int main(int argc, char *argv[])
         delete[] indexright;
     }
     delete[] in;
-    delete[] out;
+    delete[] out1;
+    delete[] out2;
 
     MPI_Finalize();
 }
