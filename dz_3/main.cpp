@@ -6,7 +6,7 @@ using namespace std;
 
 typedef complex<double> complexd;
 
-void Qubit(complexd *op1, complexd *op2, complexd *out, complexd U[2][2], int nqubits, int size, int left, int k)
+void Qubit(complexd *&op1, complexd *&op2, complexd *&out, complexd U[2][2], int nqubits, int size, int left, int k)
 {
     int shift = nqubits - k;
     int pow2q = 1 << shift;
@@ -24,6 +24,7 @@ void Qubit(complexd *op1, complexd *op2, complexd *out, complexd U[2][2], int nq
 double normal_dis_gen()
 {
     double S = 0.;
+    srand(time(NULL));
 #pragma omp parallel for
     for (int i = 0; i < 12; ++i)
     {
@@ -38,11 +39,16 @@ double fidelity(complexd *&a, complexd *&b, int size)
 #pragma omp parallel for
     for (int i = 0; i < size; i++)
     {
-        sum += a[i] * b[i];
+        sum += conj(a[i]) * b[i];
+        //cout << conj(a[i]) * b[i] << endl;
+        //cout << sum << endl;
     }
-    return 1 - norm(sum);
+    //cout << abs(sum) << endl;
+    //cout << endl << norm(sum) << endl;
+    return norm(sum);
 }
-void Init_vector(complexd *in, unsigned long size)
+
+void Init_vector(complexd *&in, unsigned long size)
 {
     for (unsigned long i = 0; i < size; i++)
     {
@@ -50,17 +56,17 @@ void Init_vector(complexd *in, unsigned long size)
     }
 }
 
-double Get_sum(complexd *in, unsigned long size)
+double Get_sum(complexd *&in, unsigned long size)
 {
     double res = 0;
     for (unsigned long i = 0; i < size; i++)
     {
-        res += abs(in[i] * in[i]);
+        res += abs(in[i] * in[i]);  
     }
     return res;
 }
 
-void Normalize(complexd *in, unsigned long size, double sum)
+void Normalize(complexd *&in, unsigned long size, double sum)
 {
     for (unsigned long i = 0; i < size; i++)
     {
@@ -76,9 +82,8 @@ void Matrix_mult(complexd (&A)[2][2], complexd (&B)[2][2], complexd (&C)[2][2])
     C[1][1] = A[1][0] * B[0][1] + A[1][1] * B[1][1];
 }
 
-void Init_matrix(complexd (&U)[2][2], double e)
+void Init_matrix(complexd (&U)[2][2], double e, double psi)
 {
-    double psi = normal_dis_gen();
     double theta = e * psi;
     complexd M[2][2];
     M[0][0] = M[1][1] = cos(theta);
@@ -98,17 +103,18 @@ int main(int argc, char *argv[])
 
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
+    srand(myrank * time(NULL));
     unsigned long size = 1 << qnum;
     double e = stod(argv[2]); //0.1, 0.01, 0.001
+    double psi = normal_dis_gen();
     complexd U[2][2], *in, *out1, *out2, U1[2][2];
     U[0][0] = U[0][1] = U[1][0] = sqrt(2) / 2;
     U[1][1] = -sqrt(2) / 2;
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < 2; j++)
             U1[i][j] = U[i][j];
-    Init_matrix(U1, e);
-    double my_begin, my_end, my_time, total_time;
+    Init_matrix(U1, e, psi);
+    double my_begin, my_end, my_time, total_time_1, total_time_2;
     int partion_size = size / world_size;
     int myleft = myrank * partion_size;
     int myright = (myrank + 1) * partion_size - 1;
@@ -125,7 +131,6 @@ int main(int argc, char *argv[])
     out2 = new complexd[partion_size];
     if (mode == 1)
     {
-        srand(myrank * time(NULL));
         Init_vector(in, partion_size);
         double sum = Get_sum(in, partion_size);
         MPI_Reduce(&sum, &totalsum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -227,27 +232,47 @@ int main(int argc, char *argv[])
             MPI_Barrier(MPI_COMM_WORLD);
             my_end = MPI_Wtime();
             my_time = my_end - my_begin;
-            MPI_Reduce(&my_time, &total_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(&my_time, &total_time_1, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+            my_begin = MPI_Wtime();
+            MPI_Barrier(MPI_COMM_WORLD);
             Qubit(op1, op2, out2, U1, qnum, partion_size, myleft, target);
-        }
-        total_time /= world_size;
+            MPI_Barrier(MPI_COMM_WORLD);
+            my_end = MPI_Wtime();
+            my_time = my_end - my_begin;
+            MPI_Reduce(&my_time, &total_time_2, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        } //seperate operation into 2, 1 for no noise, 1 for noise
+        total_time_1 /= world_size;
+        total_time_2 /= world_size;
         MPI_File_write_ordered(fout1, out1, partion_size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
         MPI_File_write_ordered(fout2, out2, partion_size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
         MPI_File_close(&fin);
         MPI_File_close(&fout1);
         MPI_File_close(&fout2);
-        double f = fidelity(out1, out2, partion_size), total_fidelity = 0;
-        MPI_Reduce(&f, &total_fidelity, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        //double f = fidelity(out1, out2, partion_size), total_fidelity = 0;
+        //MPI_Reduce(&f, &total_fidelity, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         if (!myrank)
         {
-            string name = "precision_" + to_string(e) + "_" + to_string(qnum) + ".txt"; 
+            //cout << f << endl;
+            //fstream test("out1.txt");
+            double total_fidelity = fidelity(out2, out1, partion_size);
+            /*for (int i = 0; i < partion_size; i++) {
+                cout << out1[i] << " ";
+            }
+            cout << endl;
+            //fstream test2("out2.txt");
+            for (int i = 0; i < partion_size; i++) {
+                cout << out2[i] << " ";
+            }*/
+
+            string name = "precision_" + to_string(e) + "_" + to_string(qnum) + ".txt";
             fstream out;
             out.open(name, ios::app);
-            out << total_fidelity << endl;
+            out << psi << " " << total_fidelity << endl;
             cout << "Qnum: " << qnum << endl;
             cout << "Pnum: " << world_size << endl;
             //cout << "Target: " << target << endl;
-            cout << "Time: " << total_time << " s" << endl;
+            cout << "Time: " << total_time_1 << " s" << endl;
         }
         delete[] op1;
         delete[] op2;
