@@ -33,18 +33,18 @@ double normal_dis_gen()
     return S - 6.;
 }
 
-double fidelity(complexd *&a, complexd *&b, int size)
+complexd dot_product(complexd *&a, complexd *&b, int size)
 {
     complexd sum = 0;
 #pragma omp parallel for
     for (int i = 0; i < size; i++)
     {
         sum += conj(a[i]) * b[i];
-        //cout << conj(a[i]) * b[i] << endl;
-        //cout << sum << endl;
     }
-    //cout << abs(sum) << endl;
-    //cout << endl << norm(sum) << endl;
+    return sum;
+}
+
+double fidelty(complexd sum) {
     return norm(sum);
 }
 
@@ -249,26 +249,15 @@ int main(int argc, char *argv[])
         MPI_File_close(&fin);
         MPI_File_close(&fout1);
         MPI_File_close(&fout2);
-        //double f = fidelity(out1, out2, partion_size), total_fidelity = 0;
-        //MPI_Reduce(&f, &total_fidelity, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        complexd s = dot_product(out1, out2, partion_size), total_s = 0;
+        MPI_Reduce(&s, &total_s, 1, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
+        double total_fidelity = fidelty(total_s);
         if (!myrank)
         {
-            //cout << f << endl;
-            //fstream test("out1.txt");
-            double total_fidelity = fidelity(out2, out1, partion_size);
-            /*for (int i = 0; i < partion_size; i++) {
-                cout << out1[i] << " ";
-            }
-            cout << endl;
-            //fstream test2("out2.txt");
-            for (int i = 0; i < partion_size; i++) {
-                cout << out2[i] << " ";
-            }*/
-
             string name = "precision_" + to_string(e) + "_" + to_string(qnum) + ".txt";
             fstream out;
             out.open(name, ios::app);
-            out << psi << " " << total_fidelity << endl;
+            out << 1 - total_fidelity << endl;
             cout << "Qnum: " << qnum << endl;
             cout << "Pnum: " << world_size << endl;
             //cout << "Target: " << target << endl;
