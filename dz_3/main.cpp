@@ -21,10 +21,10 @@ void Qubit(complexd *&op1, complexd *&op2, complexd *&out, complexd U[2][2], int
     }
 }
 
-double normal_dis_gen()
+double normal_dis_gen(double e)
 {
     double S = 0.;
-    srand(time(NULL));
+    srand(e);
 #pragma omp parallel for
     for (int i = 0; i < 12; ++i)
     {
@@ -44,12 +44,14 @@ complexd dot_product(complexd *&a, complexd *&b, int size)
     return sum;
 }
 
-double fidelty(complexd sum) {
+double fidelty(complexd sum)
+{
     return norm(sum);
 }
 
-void Init_vector(complexd *&in, unsigned long size)
+void Init_vector(complexd *&in, unsigned long size, int myrank)
 {
+    srand(myrank * time(NULL));
     for (unsigned long i = 0; i < size; i++)
     {
         in[i] = complexd(rand(), rand());
@@ -61,7 +63,7 @@ double Get_sum(complexd *&in, unsigned long size)
     double res = 0;
     for (unsigned long i = 0; i < size; i++)
     {
-        res += abs(in[i] * in[i]);  
+        res += abs(in[i] * in[i]);
     }
     return res;
 }
@@ -81,7 +83,6 @@ void Matrix_mult(complexd (&A)[2][2], complexd (&B)[2][2], complexd (&C)[2][2])
     C[1][0] = A[1][0] * B[0][0] + A[1][1] * B[1][0];
     C[1][1] = A[1][0] * B[0][1] + A[1][1] * B[1][1];
 }
-
 void Init_matrix(complexd (&U)[2][2], double e, double psi)
 {
     double theta = e * psi;
@@ -106,7 +107,7 @@ int main(int argc, char *argv[])
     srand(myrank * time(NULL));
     unsigned long size = 1 << qnum;
     double e = stod(argv[2]); //0.1, 0.01, 0.001
-    double psi = normal_dis_gen();
+    double psi = normal_dis_gen(e);
     complexd U[2][2], *in, *out1, *out2, U1[2][2];
     U[0][0] = U[0][1] = U[1][0] = sqrt(2) / 2;
     U[1][1] = -sqrt(2) / 2;
@@ -131,7 +132,7 @@ int main(int argc, char *argv[])
     out2 = new complexd[partion_size];
     if (mode == 1)
     {
-        Init_vector(in, partion_size);
+        Init_vector(in, partion_size, myrank);
         double sum = Get_sum(in, partion_size);
         MPI_Reduce(&sum, &totalsum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         MPI_Bcast(&totalsum, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -141,6 +142,12 @@ int main(int argc, char *argv[])
         MPI_File_open(MPI_COMM_WORLD, "vector.txt", MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &fout);
         MPI_File_write_ordered(fout, in, partion_size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
         MPI_File_close(&fout);
+        /*cout << "Process " << myrank << " : ";
+        for (int i = 0; i < partion_size; i++)
+        {
+            cout << in[i] << " ";
+        }
+        cout << endl;*/
     }
 
     if (mode == 2)
@@ -157,6 +164,12 @@ int main(int argc, char *argv[])
         MPI_File_open(MPI_COMM_WORLD, name1.c_str(), MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &fout1);
         MPI_File_open(MPI_COMM_WORLD, name2.c_str(), MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &fout2);
         MPI_File_read_ordered(fin, in, partion_size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
+        //cout << "Process " << myrank << " : ";
+        /*for (int i = 0; i < partion_size; i++)
+        {
+            cout << in[i] << " ";
+        }
+        cout << endl << endl;*/
         complexd *op1, *op2;
         op1 = new complexd[partion_size];
         op2 = new complexd[partion_size];
@@ -167,15 +180,16 @@ int main(int argc, char *argv[])
                 if (myrank == cur_rank)
                 {
                     //cout << "Now process " << cur_rank << " colletcting data" << endl;
-                    unsigned int shift = qnum - target;
-                    unsigned int pow2q = 1 << shift;
+                    int shift = qnum - target;
+                    int pow2q = 1 << (shift);
                     for (int i = 0; i < partion_size; i++)
                     {
-                        unsigned int i0 = (i + myleft) & (~pow2q);
-                        unsigned int i1 = (i + myleft) | pow2q;
+                        int i0 = (i + myleft) & (~pow2q);
+                        int i1 = (i + myleft) | pow2q;
                         if (i0 >= myleft && i0 <= myright)
                         {
-                            op1[i] = in[i0];
+                            op1[i] = in[i0 - myleft];
+                            //cout << "Process " << myrank << " : had data index " << i0 << " for op1 from in[i0] which is " << in[i0 - myleft] << endl;
                         }
                         else
                         {
@@ -189,7 +203,8 @@ int main(int argc, char *argv[])
 
                         if (i1 >= myleft && i1 <= myright)
                         {
-                            op2[i] = in[i1];
+                            op2[i] = in[i1 - myleft];
+                            //cout << "Process " << myrank << " : had data index " << i1 << " for op2 from in[i1] which is " << in[i1 - myleft] << endl;
                         }
                         else
                         {
@@ -216,7 +231,7 @@ int main(int argc, char *argv[])
                     int target_id = 0;
                     while (1)
                     {
-                        //cout << "Process " << myrank << " wait message from process " << cur_rank << endl;
+                        //out << "Process " << myrank << " wait message from process " << cur_rank << endl;
                         MPI_Recv(&target_id, 1, MPI_INT, cur_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         if (target_id == -1)
                             break;
@@ -226,6 +241,21 @@ int main(int argc, char *argv[])
                     }
                 }
             }
+            /*  cout << "Process " << myrank << " op1: ";
+                for (int i = 0; i < partion_size; i++)
+                {
+                    cout << op1[i] << " ";
+                }
+                cout << endl
+                     << endl;
+                //MPI_Barrier(MPI_COMM_WORLD);
+                cout << "Process " << myrank << " op2: ";
+                for (int i = 0; i < partion_size; i++)
+                {
+                    cout << op2[i] << " ";
+                }
+                cout << endl;
+            }*/
             my_begin = MPI_Wtime();
             MPI_Barrier(MPI_COMM_WORLD);
             Qubit(op1, op2, out1, U, qnum, partion_size, myleft, target);
@@ -241,6 +271,12 @@ int main(int argc, char *argv[])
             my_end = MPI_Wtime();
             my_time = my_end - my_begin;
             MPI_Reduce(&my_time, &total_time_2, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            /*cout << "Process " << myrank << " out1: ";
+            for (int i = 0; i < partion_size; i++)
+            {
+                cout << out1[i] << " ";
+            }
+            cout << endl;*/
         } //seperate operation into 2, 1 for no noise, 1 for noise
         total_time_1 /= world_size;
         total_time_2 /= world_size;
@@ -252,6 +288,7 @@ int main(int argc, char *argv[])
         complexd s = dot_product(out1, out2, partion_size), total_s = 0;
         MPI_Reduce(&s, &total_s, 1, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
         double total_fidelity = fidelty(total_s);
+
         if (!myrank)
         {
             string name = "precision_" + to_string(e) + "_" + to_string(qnum) + ".txt";

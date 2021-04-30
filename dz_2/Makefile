@@ -1,11 +1,11 @@
-pnum = 8
-qnum = 27
-target = 27
+pnum = 4
+qnum = 8
+target = 1
 appname = main
 write = 1
 read = 2
-mpirun = mpisubmit.pl
-n = -p
+mpirun = mpirun
+n = -n
 
 all: main run
 
@@ -16,15 +16,15 @@ run: main
 	$(mpirun) $(n) $(pnum) $(appname) $(qnum) $(target) $(write)
 
 test: main tester
-	$(mpirun) $(n) 8 $(appname) $(qnum) $(target) $(write)
+	$(mpirun) $(n) 4 $(appname) $(qnum) $(target) $(write)
 	$(mpirun) $(n) 1 $(appname) $(qnum) $(target) $(read)
 	$(mpirun) $(n) 2 $(appname) $(qnum) $(target) $(read)
 	$(mpirun) $(n) 4 $(appname) $(qnum) $(target) $(read)
-	$(mpirun) $(n) 8 $(appname) $(qnum) $(target) $(read)
-	./test $(qnum)
+	#$(mpirun) $(n) 8 $(appname) $(qnum) $(target) $(read)
+	$(mpirun) $(n) $(pnum) ./test $(qnum)
 
 tester:
-	g++ test.cpp -o test
+	mpic++ test.cpp -o test
 
 clean:
 	rm $(appname)

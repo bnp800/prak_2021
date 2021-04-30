@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
                     unsigned int i1 = (i + myleft) | pow2q;
                     if (i0 >= myleft && i0 <= myright)
                     {
-                        op1[i] = in[i0];
+                        op1[i] = in[i0 - myleft];
                     }
                     else
                     {
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
                     }
                     if (i1 >= myleft && i1 <= myright)
                     {
-                        op2[i] = in[i1];
+                        op2[i] = in[i1 - myleft];
                     }
                     else
                     {

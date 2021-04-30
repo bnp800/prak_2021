@@ -1,25 +1,33 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <mpi.h>
+#include <complex>
 
 using namespace std;
 typedef std::complex<double> complexd;
 
-int main(int argc, char *argv[])
+void check(string name1, string name2, string name3, string name4, int size, int left)
 {
-    ifstream f1("res1.txt", ios::binary | ios::in), f2("res2.txt", ios::binary | ios::in), f4("res4.txt", ios::binary | ios::in), f8("res8.txt", ios::binary | ios::in);
-    int qnum = atoi(argv[1]);
-    unsigned long size = 1 << qnum;
+    MPI_File f1, f2, f4, f8;
+    MPI_File_open(MPI_COMM_WORLD, name1.c_str(), MPI_MODE_RDONLY, MPI_INFO_NULL, &f1);
+    MPI_File_open(MPI_COMM_WORLD, name2.c_str(), MPI_MODE_RDONLY, MPI_INFO_NULL, &f2);
+    MPI_File_open(MPI_COMM_WORLD, name3.c_str(), MPI_MODE_RDONLY, MPI_INFO_NULL, &f4);
+    //MPI_File_open(MPI_COMM_WORLD, name4.c_str(), MPI_MODE_RDONLY, MPI_INFO_NULL, &f8);
+
     bool flag = true;
-    complexd tmp1, tmp2, tmp4, tmp8;
+    complexd tmp1[size], tmp2[size], tmp4[size], tmp8[size];
+    MPI_File_read_ordered(f1, tmp1, size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
+    MPI_File_read_ordered(f2, tmp2, size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
+    MPI_File_read_ordered(f4, tmp4, size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
+    //MPI_File_read_ordered(f8, tmp8, size, MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE);
+
     for (unsigned long i = 0; i < size; i++)
     {
-        f1 >> tmp1;
-        f2 >> tmp2;
-        f4 >> tmp4;
-        f8 >> tmp8;
-        if (!(tmp1 == tmp2 && tmp4 == tmp8 && tmp1 == tmp8))
+        //if (!(tmp1[i] == tmp2[i] && tmp4[i] == tmp8[i] && tmp1[i] == tmp8[i]))
+        if (!(tmp1[i] == tmp2[i] && tmp2[i] == tmp4[i]))
         {
             flag = false;
-            cout << "Error! " << i << tmp1 << tmp2 << tmp4 << tmp8 << endl;
+            //cout << "Error! " << i << " " <<  tmp1[i] << " " << tmp2[i] << " " << tmp4[i] << tmp8[i] << endl;
+            cout << "Error! " << left << " " << i + left << " " << tmp1[i] << " " << tmp2[i] << " " << tmp4[i] << endl;
             break;
         }
     }
@@ -28,8 +36,28 @@ int main(int argc, char *argv[])
         cout << "Correct!" << endl;
     }
 
-    f1.close();
-    f2.close();
-    f4.close();
-    f8.close();
+    MPI_File_close(&f1);
+    MPI_File_close(&f2);
+    MPI_File_close(&f4);
+}
+
+int main(int argc, char *argv[])
+{
+    int qnum = atoi(argv[1]);
+    int rank, world_size;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    int size = 1 << qnum;
+    int part = size / world_size;
+    int myleft = rank * part;
+    int myright = (rank + 1) * part - 1;
+    if (myright >= size)
+    {
+        myright = size - 1;
+    }
+    part = myright - myleft + 1;
+    check("res1.txt", "res2.txt", "res4.txt", "res8.txt", part, myleft);
+    //check("res1_noise.txt", "res2_noise.txt", "res4_noise.txt", "res8_noise.txt", part, myleft);
+    MPI_Finalize();
 }

@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 pnum = 4
-qnum = 8
+qnum = 10
 e = 0.01
 appname = main
 write = 1
@@ -23,11 +23,11 @@ test: main tester
 	$(mpirun) $(n) 1 $(appname) $(qnum) $(e) $(read)
 	$(mpirun) $(n) 2 $(appname) $(qnum) $(e) $(read)
 	$(mpirun) $(n) 4 $(appname) $(qnum) $(e) $(read)
-	$(mpirun) $(n) 8 $(appname) $(qnum) $(e) $(read)
-	./test $(qnum)
+	#$(mpirun) $(n) 8 $(appname) $(qnum) $(e) $(read)
+	$(mpirun) $(n) 4 ./test $(qnum)
 
 tester:
-	g++ test.cpp -o test
+	$(mpic++) test.cpp -o test
 
 distribute: main run
 	for ((i = 1; i <= ${times} ; i++)) do $(mpirun) $(n) $(pnum) $(appname) $(qnum) $(e) $(read); done
