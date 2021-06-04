@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     indexright[myrank] = myright;
     MPI_Allgather(indexleft + myrank, 1, MPI_INT, indexleft, 1, MPI_INT, MPI_COMM_WORLD);
     MPI_Allgather(indexright + myrank, 1, MPI_INT, indexright, 1, MPI_INT, MPI_COMM_WORLD);
-    string name = "ROT_res" + to_string(world_size) + ".txt";
+    string name = "ROT_res.txt";// + to_string(world_size) + ".txt";
     MPI_File fin, fout;
     MPI_File_open(MPI_COMM_WORLD, "vector.txt", MPI_MODE_RDONLY, MPI_INFO_NULL, &fin);
     MPI_File_open(MPI_COMM_WORLD, name.c_str(), MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &fout);

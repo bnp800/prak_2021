@@ -1,6 +1,7 @@
 #include <iostream>
 #include <complex>
 #include <fstream>
+#include<cstdlib>
 #include <mpi.h>
 
 using namespace std;

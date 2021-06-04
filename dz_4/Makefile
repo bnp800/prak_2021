@@ -2,9 +2,9 @@ qnum = 24
 pnum = 4
 target1 = 9
 target2 = 7
-mpirun = mpirun
-mpic++ = mpic++
-n = -n
+mpirun = mpisubmit.pl
+mpic++ = mpicxx
+n = -p
 
 generator: generator.cpp
 	$(mpic++) generator.cpp -o generator
@@ -83,6 +83,18 @@ test_CROT: CROT
 
 check_CROT: check generate test_CROT
 	$(mpirun) $(n) $(pnum) check $(qnum) CROT_res$(pnum).txt.t
+
+test: CNOT n-hadamard
+	$(mpirun) $(n) $(pnum) CNOT $(qnum) $(target1) $(target2)
+	$(mpirun) $(n) $(pnum) CNOT $(qnum) $(target1) $(target2)
+	$(mpirun) $(n) $(pnum) CNOT $(qnum) $(target1) $(target2)
+	$(mpirun) $(n) $(pnum) CNOT $(qnum) $(target1) $(target2)
+	$(mpirun) $(n) $(pnum) CNOT $(qnum) $(target1) $(target2)
+	$(mpirun) $(n) $(pnum) n-hadamard $(qnum) 
+	$(mpirun) $(n) $(pnum) n-hadamard $(qnum) 
+	$(mpirun) $(n) $(pnum) n-hadamard $(qnum) 
+	$(mpirun) $(n) $(pnum) n-hadamard $(qnum) 
+	$(mpirun) $(n) $(pnum) n-hadamard $(qnum) 
 
 clean:
 	rm *txt

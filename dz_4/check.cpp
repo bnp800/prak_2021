@@ -2,6 +2,7 @@
 #include<complex>
 #include<mpi.h>
 #include<string>
+#include<cstdlib>
 #include"check.h"
 
 typedef std::complex<double> complexd;
